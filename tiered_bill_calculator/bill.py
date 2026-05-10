@@ -46,7 +46,11 @@ def calculate_bill(previous_reading: str | int | Decimal, current_reading: str |
     curr = current_reading if isinstance(current_reading, Decimal) else _parse_decimal(str(current_reading))
 
     units_used = curr - prev
-    
+    if units_used < 0:
+        raise ValueError(
+            "Current reading must be greater than or equal to previous reading."
+        )
+
     fee = _d("800")
     rate1 = _d("5")
     rate2 = _d("10")
