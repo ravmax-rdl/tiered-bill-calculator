@@ -1,7 +1,13 @@
 # Tiered Bill Calculator
 
-A terminal-based electricity bill calculator. Enter two meter readings and get
-an instant tiered breakdown.
+A terminal-based electricity bill calculator. Enter two meter readings and get an instant tiered breakdown.
+
+<img height="30px" src="https://ziadoua.github.io/m3-Markdown-Badges/badges/Python/python3.svg">
+
+<div>
+<img height="20px" src="https://m3-markdown-badges.vercel.app/stars/8/1/ravmax-rdl/tiered-bill-calculator">
+<img height="20px" src="https://m3-markdown-badges.vercel.app/issues/8/1/ravmax-rdl/tiered-bill-calculator">
+</div>
 
 ## Tier rules
 
