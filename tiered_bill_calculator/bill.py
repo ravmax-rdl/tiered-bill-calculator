@@ -82,11 +82,11 @@ def calculate_bill(previous_reading: str | int | Decimal, current_reading: str |
     if u1 > 0 or units_used == _d("0"):
         breakdown.append(TierBreakdownLine("First 30 units", u1, rate1, u1 * rate1))
     if u2 > 0:
-        breakdown.append(TierBreakdownLine("Next 30 units", u2, rate2, u2 * rate2))
+        breakdown.append(TierBreakdownLine("Units 31-60", u2, rate2, u2 * rate2))
     if u3 > 0:
-        breakdown.append(TierBreakdownLine("Next 30 units", u3, rate3, u3 * rate3))
+        breakdown.append(TierBreakdownLine("Units 61-90", u3, rate3, u3 * rate3))
     if u4 > 0:
-        breakdown.append(TierBreakdownLine("Remaining units", u4, rate4, u4 * rate4))
+        breakdown.append(TierBreakdownLine("Units 91+", u4, rate4, u4 * rate4))
 
     return BillResult(
         previous_reading=prev,
