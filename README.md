@@ -23,12 +23,44 @@ Let `k = current_reading − previous_reading` (units consumed).
 ## Requirements
 
 - Python ≥ 3.14.3
+- No third-party packages
 
-## Interactive TUI
+## Getting started
+
+**1. Clone the repository**
+
+```bash
+git clone https://github.com/your-username/tiered-bill-calculator.git
+cd tiered-bill-calculator
+```
+
+**2. Create and activate a virtual environment**
+
+```bash
+python -m venv .venv
+```
+
+```bash
+# Windows
+.venv\Scripts\activate
+
+# macOS / Linux
+source .venv/bin/activate
+```
+
+**3. Run the app**
 
 ```bash
 python -m tiered_bill_calculator
 ```
+
+**4. (Optional) Run the tests**
+
+```bash
+python -m unittest discover -s tests
+```
+
+## Interactive TUI
 
 The TUI runs in your existing terminal window:
 
@@ -82,15 +114,6 @@ Breakdown
 | Next 30 units  | 10    | 10.00 | 100.00   |
 +-------------------------------------------+
 ```
-
-## Tests
-
-```bash
-python -m unittest discover -s tests
-```
-
-Covers all four tier boundaries, exact value/total figures, and the
-invalid-input error case (current reading < previous reading).
 
 ## Documentation
 
