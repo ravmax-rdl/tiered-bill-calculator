@@ -49,5 +49,5 @@ flowchart TD
 
 - **No third-party dependencies.** Only the Python standard library (`os`, `shutil`, `decimal`, `dataclasses`, `argparse`).
 - **Pure core.** `bill.py` contains zero I/O. It takes readings, returns a `BillResult` dataclass. This makes it trivially testable and reusable.
-- **Single renderer.** `render_bill_to_text()` is shared by both the interactive TUI (result display) and the one-shot CLI path, ensuring consistent output.
+ - **Separated presentation paths.** `tui.py` owns all user-facing output, with `render_bill_to_text()` used for the one-shot CLI path and a separate interactive result-display path used by `run_tui()`.
 - **Exact arithmetic.** All monetary values use `decimal.Decimal` to avoid floating-point rounding errors.
