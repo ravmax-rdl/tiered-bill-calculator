@@ -9,9 +9,11 @@ from .tui import run_tui, render_bill_to_text
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="tiered-bill-calculator",
-        description="Simple tiered bill calculator (TUI + non-interactive mode).",
+        description="Simple tiered bill calculator.",
     )
-    parser.add_argument("--previous", type=str, help="Previous month reading (e.g., 100)")
+    parser.add_argument(
+        "--previous", type=str, help="Previous month reading (e.g., 100)"
+    )
     parser.add_argument("--current", type=str, help="Current reading (e.g., 140)")
     parser.add_argument(
         "--no-clear",
@@ -36,4 +38,3 @@ def main(argv: list[str] | None = None) -> None:
 
 
 __all__ = ["main"]
-
