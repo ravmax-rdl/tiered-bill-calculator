@@ -3,6 +3,20 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 
+TIER_ORDER: tuple[str, ...] = ("low", "normal", "high", "very high")
+TIER_DISPLAY_NAMES: dict[str, str] = {
+    "low": "Low",
+    "normal": "Normal",
+    "high": "High",
+    "very high": "Very High",
+}
+TIER_FIXED_FEES: dict[str, Decimal] = {
+    "low": Decimal("200"),
+    "normal": Decimal("400"),
+    "high": Decimal("600"),
+    "very high": Decimal("800"),
+}
+
 
 @dataclass(frozen=True)
 class TierBreakdownLine:
@@ -72,20 +86,17 @@ def calculate_bill(previous_reading: str | int | Decimal, current_reading: str |
 
     if units_used <= _d("30"):
         tier = "low"
-        fee = _d("200")
         formula = "Value = k*5"
     elif units_used <= _d("60"):
         tier = "normal"
-        fee = _d("400")
         formula = "Value = 30*5 + (k-30)*10"
     elif units_used <= _d("90"):
         tier = "high"
-        fee = _d("600")
         formula = "Value = 30*5 + 30*10 + (k-60)*20"
     else:
         tier = "very high"
-        fee = _d("800")
         formula = "Value = 30*5 + 30*10 + 30*20 + (k-90)*30"
+    fee = TIER_FIXED_FEES[tier]
 
     value = (u1 * rate1) + (u2 * rate2) + (u3 * rate3) + (u4 * rate4)
     total = value + fee

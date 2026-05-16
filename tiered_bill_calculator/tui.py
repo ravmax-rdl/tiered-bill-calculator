@@ -4,7 +4,15 @@ import os
 import shutil
 from decimal import Decimal
 
-from .bill import BillResult, calculate_bill, parse_reading, quantize_money
+from .bill import (
+    BillResult,
+    TIER_DISPLAY_NAMES,
+    TIER_FIXED_FEES,
+    TIER_ORDER,
+    calculate_bill,
+    parse_reading,
+    quantize_money,
+)
 
 
 _RESET   = "\033[0m"
@@ -69,6 +77,13 @@ def _badge(text: str, bg: str, fg: str = _WHITE) -> str:
 
 def _section_label(text: str, color: str = _CYAN) -> str:
     return f"{color}{_BOLD}▸ {text}{_RESET}"
+
+
+def _fixed_fee_schedule_text() -> str:
+    return "  ".join(
+        f"{TIER_DISPLAY_NAMES[tier]}={_fmt_money(TIER_FIXED_FEES[tier])}"
+        for tier in TIER_ORDER
+    )
 
 
 def _box(lines: list[str], *, width: int | None = None, padding: int = 1, border_color: str = "") -> str:
@@ -190,7 +205,7 @@ def run_tui(*, clear_screen: bool = True) -> None:
 
         intro = [
             "Compute tiered bill from two meter readings.",
-            "Units  k = current - previous  |  Fixed fee by tier: Low=200  Normal=400  High=600  Very High=800",
+            f"Units  k = current - previous  |  Fixed fee by tier: {_fixed_fee_schedule_text()}",
             "",
         ]
         print(_box(intro, width=width, border_color=_DIM + _CYAN))
