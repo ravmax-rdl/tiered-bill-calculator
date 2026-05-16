@@ -4,19 +4,37 @@ import os
 import shutil
 from decimal import Decimal
 
-from .bill import BillResult, calculate_bill, parse_reading, quantize_money
+from .bill import (
+    BillResult,
+    TIER_DISPLAY_NAMES,
+    TIER_FIXED_FEES,
+    TIER_ORDER,
+    calculate_bill,
+    parse_reading,
+    quantize_money,
+)
 
 
-_RESET = "\033[0m"
-_BOLD  = "\033[1m"
-_DIM   = "\033[2m"
-_CYAN  = "\033[36m"
+_RESET   = "\033[0m"
+_BOLD    = "\033[1m"
+_DIM     = "\033[2m"
+_CYAN    = "\033[36m"
+_WHITE   = "\033[97m"
+_RED     = "\033[31m"
+_ERR_BG  = "\033[41m"
 
 _TIER_COLOR: dict[str, str] = {
     "low":       "\033[32m",
     "normal":    "\033[33m",
     "high":      "\033[91m",
     "very high": "\033[31m",
+}
+
+_TIER_BG: dict[str, str] = {
+    "low":       "\033[42m",
+    "normal":    "\033[43m",
+    "high":      "\033[101m",
+    "very high": "\033[41m",
 }
 
 
@@ -31,7 +49,7 @@ def _clear() -> None:
     os.system("cls" if os.name == "nt" else "clear")
 
 
-def _hr(width: int | None = None, char: str = "-") -> str:
+def _hr(width: int | None = None, char: str = "─") -> str:
     return char * (width if width is not None else _term_width())
 
 
@@ -53,7 +71,23 @@ def _fmt_money(value: Decimal) -> str:
     return str(quantize_money(value))
 
 
-def _box(lines: list[str], *, width: int | None = None, padding: int = 1) -> str:
+def _badge(text: str, bg: str, fg: str = _WHITE) -> str:
+    return f"{bg}{_BOLD}{fg} {text} {_RESET}"
+
+
+def _section_label(text: str, color: str = _CYAN) -> str:
+    return f"{color}{_BOLD}▸ {text}{_RESET}"
+
+
+def _fixed_fee_schedule_text() -> str:
+    return "  ".join(
+        f"{TIER_DISPLAY_NAMES[tier]}={_fmt_money(TIER_FIXED_FEES[tier])}"
+        for tier in TIER_ORDER
+    )
+
+
+def _box(lines: list[str], *, width: int | None = None, padding: int = 1, border_color: str = "") -> str:
+    rs = _RESET if border_color else ""
     used_width = width if width is not None else _term_width()
     inner_width = max(
         1,
@@ -63,8 +97,9 @@ def _box(lines: list[str], *, width: int | None = None, padding: int = 1) -> str
         ),
     )
     fixed = [_fit(l, inner_width) for l in lines]
-    top = "+" + "-" * (inner_width + 2 * padding) + "+"
-    rows = ["|" + " " * padding + l.ljust(inner_width) + " " * padding + "|" for l in fixed]
+    bc = border_color
+    top = bc + "+" + "-" * (inner_width + 2 * padding) + "+" + rs
+    rows = [bc + "|" + rs + " " * padding + l.ljust(inner_width) + " " * padding + bc + "|" + rs for l in fixed]
     return "\n".join([top, *rows, top])
 
 
@@ -95,21 +130,20 @@ def render_bill_to_text(result: BillResult) -> str:
     inputs = [
         f"Previous reading : {_fmt_units(result.previous_reading)}",
         f"Current reading  : {_fmt_units(result.current_reading)}",
-        f"Units used (k)   : {_fmt_units(result.units_used)}",
-        f"Tier              : {result.tier}",
+        f"Units used       : {_fmt_units(result.units_used)}",
+        f"Tier             : {result.tier}",
     ]
     calc = [
         "Calculation",
-        f"k         : {_fmt_units(result.units_used)}",
         f"Formula  : {result.formula}",
         f"Value    : {_fmt_money(result.value)}",
-        f"Fixed fee: 800.00",
+        f"Fixed fee: {_fmt_money(result.fixed_fee)}",
         f"Total     : {_fmt_money(result.total)}",
     ]
     table_lines = _format_table_rows(result)
     return "\n".join([
         f"{'Tiered Bill Calculator':^{width}}",
-        _hr(width),
+        "-" * width,
         _box(inputs, width=width),
         "",
         _box(calc, width=width),
@@ -121,38 +155,39 @@ def render_bill_to_text(result: BillResult) -> str:
 
 def _print_header(width: int) -> None:
     print(_CYAN + _BOLD + f"{'Tiered Bill Calculator':^{width}}" + _RESET)
-    print(_DIM + _hr(width) + _RESET)
+    print(_DIM + _CYAN + _hr(width) + _RESET)
 
 
 def _print_result(result: BillResult, width: int) -> None:
     tier_color = _TIER_COLOR.get(result.tier, "")
+    tier_bg    = _TIER_BG.get(result.tier, "")
 
     inputs = [
         f"Previous reading : {_fmt_units(result.previous_reading)}",
         f"Current reading  : {_fmt_units(result.current_reading)}",
-        f"Units used (k)   : {_fmt_units(result.units_used)}",
+        f"Units used       : {_fmt_units(result.units_used)}",
     ]
-    print(_box(inputs, width=width))
+    print(_box(inputs, width=width, border_color=_DIM + _CYAN))
     print()
 
     calc_plain = [
         "Calculation",
-        f"k         : {_fmt_units(result.units_used)}",
         f"Formula  : {result.formula}",
         f"Value    : {_fmt_money(result.value)}",
-        f"Fixed fee: 800.00",
+        f"Fixed fee: {_fmt_money(result.fixed_fee)}",
         f"Total     : {_fmt_money(result.total)}",
     ]
-    print(_box(calc_plain, width=width))
+    print(_box(calc_plain, width=width, border_color=tier_color))
     print()
 
-    print("Breakdown")
-    print(_box(_format_table_rows(result), width=width))
+    print(_section_label("Breakdown"))
+    print(_box(_format_table_rows(result), width=width, border_color=_DIM + _CYAN))
     print()
 
+    tier_badge = _badge(result.tier.upper(), bg=tier_bg)
     print(
-        f"  Tier  : {tier_color}{_BOLD}{result.tier.upper()}{_RESET}"
-        f"   |   Total : {_BOLD}{_fmt_money(result.total)}{_RESET}"
+        f"  {_DIM}Tier{_RESET} : {tier_badge}"
+        f"   {_DIM}Total{_RESET} : {tier_color}{_BOLD}{_fmt_money(result.total)}{_RESET}"
     )
 
 
@@ -170,41 +205,33 @@ def run_tui(*, clear_screen: bool = True) -> None:
 
         intro = [
             "Compute tiered bill from two meter readings.",
-            f"Units  k = current - previous  |  Fixed fee = +800",
+            f"Units  k = current - previous  |  Fixed fee by tier: {_fixed_fee_schedule_text()}",
             "",
-            "Tip: decimal values are accepted (e.g. 123.5).",
         ]
-        print(_box(intro, width=width))
+        print(_box(intro, width=width, border_color=_DIM + _CYAN))
         print()
 
-        prev_hint = f" [{_fmt_units(previous)}]" if previous is not None else ""
-        curr_hint = f" [{_fmt_units(current)}]" if current is not None else ""
-
         while True:
-            raw = input(f"  Previous month reading{prev_hint}: ").strip()
-            if raw == "" and previous is not None:
-                break
+            raw = input(f"  {_DIM}Previous month reading{_RESET}: ").strip()
             try:
                 previous = parse_reading(raw)
                 break
             except ValueError as exc:
-                print(f"  {_BOLD}Error:{_RESET} {exc}")
+                print(f"  {_badge('ERROR', bg=_ERR_BG)} {exc}")
 
         while True:
-            raw = input(f"  Current reading       {curr_hint}: ").strip()
-            if raw == "" and current is not None:
-                break
+            raw = input(f"  {_DIM}Current reading       {_RESET}: ").strip()
             try:
                 current = parse_reading(raw)
                 break
             except ValueError as exc:
-                print(f"  {_BOLD}Error:{_RESET} {exc}")
+                print(f"  {_badge('ERROR', bg=_ERR_BG)} {exc}")
 
         try:
             result = calculate_bill(previous, current)
         except ValueError as exc:
             print()
-            print(_box([f"Error: {exc}", "Press Enter to re-enter readings."], width=width))
+            print(_box([f"Error: {exc}", "Press Enter to re-enter readings."], width=width, border_color=_RED))
             input()
             previous = None
             current = None
@@ -217,7 +244,7 @@ def run_tui(*, clear_screen: bool = True) -> None:
         print()
         _print_result(result, width)
         print()
-        print(_DIM + "  [Enter] recalculate   [Q] quit" + _RESET)
+        print(_DIM + "  [Enter] new readings   [Q] quit" + _RESET)
 
         if input("  > ").strip().lower() == "q":
             break
